@@ -6,19 +6,24 @@
  */
 #include <stdlib.h>
 #include <iostream>
+#include <unistd.h>
+#include <signal.h>
 #include <stdexcept>
 #include "Serveur.hh"
 
 int main (int argc, char** argv)
 {
 
+
 	Serveur* serveur = new Serveur(atoi(argv[1]));
+	signal(SIGPIPE, SIG_IGN);
 
 	struct timeval tv;
 	fd_set readfds;
 
 	while(true)
 	{
+
 		FD_ZERO(&readfds);
 		FD_SET(serveur->getSocketHandler(), &readfds);
 		int maxSocket = serveur->getSocketHandler();
@@ -29,16 +34,20 @@ int main (int argc, char** argv)
 			if((*it)>maxSocket)
 				maxSocket=*it;
 			FD_SET(*it, &readfds);
-			std::cout << *it << std::endl;
+			std::cout << "\tSocket:" << *it << std::endl;
 		}
 
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
 		std::cout << maxSocket << std::endl;
 		int sock = select(maxSocket+1, &readfds, NULL, NULL, &tv);
-		if(sock <= 0)
+		if(sock < 0)
 		{
-			throw std::runtime_error("Erreur sur le select");
+			throw std::runtime_error("Erreur sur le select <0");
+		}
+		if(sock == 0)
+		{
+			continue;
 		}
 		// reception d'une demande de nouvelle connexion
 		if(FD_ISSET(serveur->getSocketHandler(), &readfds))

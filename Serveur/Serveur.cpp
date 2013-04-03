@@ -10,8 +10,8 @@
 Serveur::Serveur(int port)
 {
 	listeClient = new std::vector<int>();
-
-
+	listNickName = new std::map<int,std::string>();
+	int nbClient = 0;
 	bzero(&mon_address,sizeof(mon_address));
 	mon_address.sin_port = htons(port);
 	mon_address.sin_family = AF_INET;
@@ -57,5 +57,43 @@ int Serveur::acceptClient()
 		listeClient->push_back(newSockfd);
 	std::cout << "Ajout socket num: " <<newSockfd << std::endl;
 
+	std::string nickName = "unnamed";
+
+	std::ostringstream oss;
+	oss << nbClient;
+	nickName+=oss.str();
+	nickName+='\0';
+	listNickName->insert(std::pair<int,std::string>(newSockfd,nickName));
+	++nbClient;
 	return newSockfd;
+}
+
+int Serveur::rerootToAll(const char*  message, const uint32_t size, int from)
+{
+
+  std::string nickName;
+  nickName = listNickName->at(from);
+  std::cout << nickName.c_str() << "-" << nickName.length()<< std::endl;
+      uint32_t newSize=size+nickName.length();
+      std::cout << newSize << std::endl;
+ std::vector<int>::iterator it;
+  for(it= listeClient->begin(); it != listeClient->end(); ++it)
+    {
+      char * newMessage = new char[newSize];
+      uint32_t type_r=3;
+
+      memcpy(newMessage,&newSize,sizeof(uint32_t));
+      memcpy(newMessage+sizeof(uint32_t),&type_r, sizeof(uint32_t));
+      memcpy(newMessage+sizeof(uint32_t)*2,nickName.c_str(), nickName.length());
+      memcpy(newMessage+sizeof(uint32_t)*2+nickName.length(),message+sizeof(uint32_t)*2, size-sizeof(uint32_t)*2);
+     
+      write(*it, newMessage, newSize);
+	
+    }
+
+}
+
+int Serveur::rerootToOne(const char* message, uint32_t size, std::string nickName)
+{
+
 }

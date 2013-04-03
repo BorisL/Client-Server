@@ -78,11 +78,8 @@ int main (int argc, char** argv)
 				{
 				case 1:
 					// message texte
-						uint32_t type_r;
-						type_r = 3;
-						memcpy(buff+sizeof(uint32_t),&type_r, sizeof(uint32_t));
-						write(*it, buff, size);
-					break;
+				  serveur->rerootToAll(buff,size_m,*it);
+				  break;
 				case 2:
 					// changement de pseudo
 					break;

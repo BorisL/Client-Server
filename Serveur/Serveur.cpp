@@ -7,6 +7,12 @@
 
 #include "Serveur.hh"
 
+// handler pour le signal SIGPIP
+int handler(int sig)
+{
+  std::cout << "handler" << sig << std::endl;
+}
+
 Serveur::Serveur(int port)
 {
 	listeClient = new std::vector<int>();
@@ -21,13 +27,15 @@ Serveur::Serveur(int port)
 	bind(socket_handler,(struct sockaddr *)&mon_address,sizeof(mon_address));
 
 	listen(socket_handler,5);
+	signal(SIGPIPE, SIG_IGN);
 	addrlen = sizeof(mon_address);
 
 }
 
 Serveur::~Serveur()
 {
-
+  delete listeClient;
+  delete listNickName;
 }
 
 int Serveur::getSocketHandler() const {
@@ -68,6 +76,17 @@ int Serveur::acceptClient()
 	return newSockfd;
 }
 
+int Serveur::changeNickname(int sock, char* newNick)
+{
+  std::cout << "change nick name to " << newNick << std::endl;
+  std::ostringstream oss;
+  oss << newNick;
+  oss << '\0';
+  (*listNickName)[sock]=oss.str();
+  // TODO verifier si le NickName existe deja
+  return 1; // Ok
+}
+
 int Serveur::rerootToAll(const char*  message, const uint32_t size, int from)
 {
 
@@ -95,5 +114,5 @@ int Serveur::rerootToAll(const char*  message, const uint32_t size, int from)
 
 int Serveur::rerootToOne(const char* message, uint32_t size, std::string nickName)
 {
-
+  // TODO à faire
 }
